@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .registration-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            /* Full viewport height */
+        }
+
+        .form-heading {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input.error {
+            border: 1px solid red;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .btn-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button a {
+            text-decoration: none;
+            color: #fff;
+        }
+
+        button[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        button[type="button"] {
+            background-color: #008CBA;
+            color: white;
+        }
+
+        button[type="button"]:hover {
+            background-color: #0073aa;
+        }
+
+        /* Custom Alert Box */
+        .custom-alert {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .custom-alert-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-alert-content h2 {
+            margin-top: 0;
+        }
+
+        .custom-alert-content p {
+            margin-bottom: 20px;
+        }
+
+        .custom-alert-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .navbar .app-name {
+            float: left;
+            font-size: 24px;
+            color: white;
+            padding: 14px 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="navbar">
+        <span class="app-name"><a href="index.html">Attendance App</a></span>
+    </div>
+    <div class="registration-page">
+        <form id="registration" onsubmit="return validateForm()">
+            <h1 class="form-heading">Registration Form</h1>
+            <div class="input-field">
+                <label class="form-label" for="username">Username :</label><br>
+                <input type="text" id="username" placeholder="USERNAME"><br>
+                <label id="username-error" class="error-message"></label>
+            </div>
+            <div class="input-field">
+                <label class="form-label" for="password">Password :</label><br>
+                <input type="password" id="password" placeholder="PASSWORD"><br>
+                <label id="password-error" class="error-message"></label>
+            </div>
+            <div class="input-field">
+                <label class="form-label" for="email">Email :</label><br>
+                <input type="email" id="email" placeholder="EMAIL"><br>
+                <label id="email-error" class="error-message"></label>
+            </div>
+            <div class="input-field">
+                <label class="form-label" for="phoneNumber">Phone No:</label><br>
+                <input type="number" id="phoneNumber" placeholder="PHONE NO."><br>
+                <label id="phoneNumber-error" class="error-message"></label>
+            </div>
+            <div class="btn-field">
+                <button type="button"><a href="Index.html">LOGIN</a></button>
+                <button type="submit">REGISTER</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Custom Alert Box -->
+    <div id="customAlert" class="custom-alert">
+        <div class="custom-alert-content">
+            <h2>Alert</h2>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertOKButton">OK</button>
+        </div>
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Real-time validation
+            $("#username").on("input", function () {
+                validateUsername();
+            });
+
+            $("#password").on("input", function () {
+                validatePassword();
+            });
+
+            $("#email").on("input", function () {
+                validateEmail();
+            });
+
+            $("#phoneNumber").on("input", function () {
+                validatePhoneNumber();
+            });
+        });
+
+        function validateForm() {
+            // Reset previous error messages and borders
+            $(".error-message").text("");
+            $("input").removeClass("error");
+
+            var isValid = true;
+
+            if (!validateUsername()) isValid = false;
+            if (!validatePassword()) isValid = false;
+            if (!validateEmail()) isValid = false;
+            if (!validatePhoneNumber()) isValid = false;
+
+            return isValid;
+        }
+
+        function validateUsername() {
+            var username = $("#username").val().trim();
+            if (username === '') {
+                $("#username-error").text("Username is required.");
+                $("#username").addClass("error");
+                return false;
+            }
+            $("#username-error").text("");
+            $("#username").removeClass("error");
+            return true;
+        }
+
+        function validatePassword() {
+            var password = $("#password").val().trim();
+            if (password === '') {
+                $("#password-error").text("Password is required.");
+                $("#password").addClass("error");
+                return false;
+            }
+            $("#password-error").text("");
+            $("#password").removeClass("error");
+            return true;
+        }
+
+        function validateEmail() {
+            var email = $("#email").val().trim();
+            var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email === '') {
+                $("#email-error").text("Email is required.");
+                $("#email").addClass("error");
+                return false;
+            } else if (!emailRegex.test(email)) {
+                $("#email-error").text("Invalid email format.");
+                $("#email").addClass("error");
+                return false;
+            }
+            $("#email-error").text("");
+            $("#email").removeClass("error");
+            return true;
+        }
+
+        function validatePhoneNumber() {
+            var phoneNumber = $("#phoneNumber").val().trim();
+            var phoneRegex = /^\d{10}$/;
+
+            if (phoneNumber === '') {
+                $("#phoneNumber-error").text("Phone number is required.");
+                $("#phoneNumber").addClass("error");
+                return false;
+            } else if (!phoneRegex.test(phoneNumber)) {
+                $("#phoneNumber-error").text("Invalid phone number format.");
+                $("#phoneNumber").addClass("error");
+                return false;
+            }
+            $("#phoneNumber-error").text("");
+            $("#phoneNumber").removeClass("error");
+            return true;
+        }
+
+        $("#registration").submit(function (event) {
+            event.preventDefault();
+
+            if (!validateForm()) {
+                return; // Exit if form validation fails
+            }
+
+            var username = $("#username").val();
+            var password = $("#password").val();
+            var email = $("#email").val();
+            var phoneNumber = $("#phoneNumber").val();
+
+            $.ajax({
+                url: "http://localhost:8080/register",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    username: username,
+                    password: password,
+                    email: email,
+                    phoneNumber: phoneNumber
+                }),
+                success: function (response) {
+                    $("#registration")[0].reset(); // Reset form after successful registration
+                    $(".error-message").text(""); // Clear any previous error messages
+                    showCustomAlert(response, function () { });
+                    window.location.href="index.html";
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    showCustomAlert("Registration failed: " + errorThrown);
+                    console.error(jqXHR, textStatus, errorThrown);
+                }
+            });
+        });
+
+        // Custom Alert Box Functions
+        function showCustomAlert(message, callback) {
+            $("#customAlertMessage").text(message);
+            $("#customAlert").css("display", "block");
+
+            $("#customAlertOKButton").off("click").on("click", function () {
+                $("#customAlert").css("display", "none");
+                if (typeof callback === "function") {
+                    callback();
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>

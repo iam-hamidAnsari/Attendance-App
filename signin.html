@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        h1 {
+            display: flex;
+            justify-content: center;
+            margin-top: 10%;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+
+        }
+
+        button[onclick="logOut()"] {
+            display: block;
+            /* Make it a block element to occupy full width */
+            color: white;
+            margin-left: 80%;
+            background-color: red;
+
+        }
+
+        button[onclick="signIn()"] {
+            display: block;
+            margin: 0 auto;
+            color: white;
+            background-color: #4CAF50;
+
+        }
+
+        button[onclick="viewReport()"] {
+            display: block;
+            margin: 0 auto;
+            color: white;
+            background-color: #0073aa;
+        }
+
+        button[onclick="logOut()"]:hover {
+            background-color: red;
+        }
+
+        button[onclick="signIn()"]:hover {
+            background-color: #4CAF50;
+        }
+
+        button[onclick="viewReport()"]:hover {
+            background-color: #0073aa;
+        }
+
+        .btn-field {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Custom Alert Box */
+        .custom-alert {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .custom-alert-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-alert-content h2 {
+            margin-top: 0;
+        }
+
+        .custom-alert-content p {
+            margin-bottom: 20px;
+        }
+
+        .custom-alert-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .navbar .app-name {
+            float: left;
+            font-size: 24px;
+            color: white;
+            padding: 14px 20px;
+        }
+    </style>
+    <title>Sign In Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const email = localStorage.getItem("email");
+
+            if (!email) {
+                showCustomAlert("Email not found. Please log in again.", function () {
+                    window.location.href = "index.html"; // Redirect to login page if email not found after alert dismissed
+                });
+            }
+        });
+
+        function signIn() {
+            const email = localStorage.getItem("email");
+
+            if (!email) {
+                showCustomAlert("Email not found. Please log in again.", function () {
+                    window.location.href = "index.html"; // Redirect to login page if email not found after alert dismissed
+                });
+                return;
+            }
+
+            $.ajax({
+                url: "http://localhost:8080/signin",
+                type: "POST",
+                data: {
+                    email: email // Pass the email parameter here
+                },
+                success: function (response) {
+                    showCustomAlert("Sign in successful", function () {
+                        window.location.href = "signout.html"; // Redirect after user acknowledges alert
+                    });
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    showCustomAlert("Error signing in: " + errorThrown, function () {
+                        // Optionally handle error alert acknowledgment
+                    });
+                }
+            });
+        }
+
+        function logOut() {
+            // Clear the email from localStorage and redirect
+            localStorage.removeItem("email");
+            window.location.href = "index.html";
+        }
+
+        function viewReport() {
+            window.location.href = 'report.html';
+        }
+
+        function showCustomAlert(message, callback) {
+            $("#customAlertMessage").text(message);
+            $("#customAlert").css("display", "block");
+
+            $("#customAlertOKButton").off("click").on("click", function () {
+                $("#customAlert").css("display", "none");
+                if (typeof callback === "function") {
+                    callback();
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <span class="app-name"><a href="index.html">Attendance App</a></span>
+
+        <button class="btn-field" onclick="logOut()">Log Out</button>
+        <a href="Index.html">Home</a>
+        <!-- <a href="signout.html">Sign Out</a>
+        <a href="admin.html">Admin</a> -->
+    </div>
+
+    <div class="sign-in-container">
+        <h1>Sign in</h1>
+
+        <button class="btn-field" onclick="signIn()">Sign In</button><br><br>
+        <button class="btn-field" onclick="viewReport()">View Report</button>
+
+    </div>
+
+    <div id="customAlert" class="custom-alert">
+        <div class="custom-alert-content">
+            <h2>Alert</h2>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertOKButton">OK</button>
+        </div>
+    </div>
+
+</body>
+
+</html>

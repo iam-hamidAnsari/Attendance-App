@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .report-container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .report-record {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+
+        .report-date {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .report-signin,
+        .report-signout {
+            margin-left: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        button[onclick="logOut()"] {
+            display: block;
+            /* Make it a block element to occupy full width */
+            color: white;
+            margin-left: 80%;
+            background-color: red;
+        }
+
+        button[onclick="logOut()"]:hover {
+            background-color: red;
+        }
+
+        button[onclick="history.back()"] {
+            display: block;
+            /* Make it a block element to occupy full width */
+            color: white;
+            margin-left: 80%;
+            background-color: #008CBA;
+        }
+
+        button[onclick="history.back()"]:hover {
+            background-color: #008CBA;
+        }
+
+        /* Custom Alert Box */
+        .custom-alert {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .custom-alert-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .custom-alert-content h2 {
+            margin-top: 0;
+        }
+
+        .custom-alert-content p {
+            margin-bottom: 20px;
+        }
+
+        .custom-alert-content button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .navbar .app-name {
+            float: left;
+            font-size: 24px;
+            color: white;
+            padding: 14px 20px;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const email = localStorage.getItem("email");
+            if (!email) {
+                showCustomAlert("Email not found. Please log in again.", function () {
+                    window.location.href = "index.html";
+                });
+                return;
+            }
+
+            $.ajax({
+                url: `http://localhost:8080/report?email=${email}`,
+                type: 'GET',
+                success: function (report) {
+                    const reportContainer = $('#report-container');
+                    reportContainer.empty();
+
+                    if (report.length === 0) {
+                        reportContainer.append('<p>No attendance records found.</p>');
+                        return;
+                    }
+
+                    report.forEach(record => {
+                        const recordElement = $('<div class="report-record"></div>');
+                        const dateElement = $('<div class="report-date"></div>').text(record.date);
+                        recordElement.append(dateElement);
+
+                        const signInTimes = record.signInTimes;
+                        const signOutTimes = record.signOutTimes;
+                        const maxLength = Math.max(signInTimes.length, signOutTimes.length);
+
+                        for (let i = 0; i < maxLength; i++) {
+                            const signInElement = $('<div class="report-signin"></div>').text(`Sign in - ${signInTimes[i] ? formatTime(signInTimes[i]) : 'Absent'}`);
+                            const signOutElement = $('<div class="report-signout"></div>').text(`Sign out - ${signOutTimes[i] ? formatTime(signOutTimes[i]) : 'Absent'}`);
+                            recordElement.append(signInElement);
+                            recordElement.append(signOutElement);
+                        }
+
+                        reportContainer.append(recordElement);
+                    });
+                },
+                error: function () {
+                    showCustomAlert('Error loading report', function () {
+                        // Handle the error
+                    });
+                }
+            });
+        });
+
+        function formatTime(timeString) {
+            const [hours, minutes, seconds] = timeString.split(':');
+            const period = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = hours % 12 || 12;
+            return `${formattedHours}:${minutes}:${seconds.split('.')[0]} ${period}`;
+        }
+
+        function logOut() {
+            localStorage.removeItem("email");
+            window.location.href = "index.html";
+        }
+
+        function showCustomAlert(message, callback) {
+            $("#customAlertMessage").text(message);
+            $("#customAlert").css("display", "block");
+
+            $("#customAlertOKButton").off("click").on("click", function () {
+                $("#customAlert").css("display", "none");
+                if (typeof callback === "function") {
+                    callback();
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+
+    <div class="navbar">
+        <span class="app-name"><a href="index.html">Attendance App</a></span>
+        <button class="btn-field" onclick="logOut()">Log Out</button>
+        <button onclick="history.back()">Back</button>
+    </div>
+
+    <div class="report-container">
+        <h1>Attendance Report</h1>
+        <div id="report-container"></div>
+    </div>
+
+    <div id="customAlert" class="custom-alert">
+        <div class="custom-alert-content">
+            <h2>Alert</h2>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertOKButton">OK</button>
+        </div>
+    </div>
+
+</body>
+
+</html>

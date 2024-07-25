@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        .user-details {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .user-details h2 {
+            margin-top: 0;
+        }
+
+        button[onclick="history.back()"] {
+            display: block;
+            /* Make it a block element to occupy full width */
+            color: white;
+            margin-left: 80%;
+            background-color: #008CBA;
+
+        }
+
+        button[onclick="history.back()"]:hover {
+            background-color: #008CBA;
+        }
+
+        /* Custom alert box styles */
+        .custom-alert-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .custom-alert-message {
+            margin-bottom: 10px;
+        }
+
+        .custom-alert-buttons {
+            text-align: right;
+        }
+
+        .custom-alert-button {
+            padding: 5px 10px;
+            margin-left: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+        }
+
+        .custom-alert-button:hover {
+            background-color: #0056b3;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        button[onclick="logOut()"] {
+            display: block;
+            /* Make it a block element to occupy full width */
+            color: white;
+            margin-left: 80%;
+            background-color: red;
+
+        }
+
+        button[onclick="logOut()"]:hover {
+            background-color: red;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .navbar a {
+            float: left;
+            display: block;
+            color: #f2f2f2;
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+        }
+
+        .navbar a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .navbar .app-name {
+            float: left;
+            font-size: 24px;
+            color: white;
+            padding: 14px 20px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            const email = JSON.parse(localStorage.getItem("selectedUserEmail"));
+
+            if (!email) {
+                showCustomAlert("Email parameter is missing.", function () {
+                });
+                return;
+            }
+
+            $.ajax({
+                url: "http://localhost:8080/userDetails?email=" + email,
+                type: "GET",
+                success: function (response) {
+                    // Handle both single object and array response
+                    const attendanceRecords = Array.isArray(response) ? response : [response];
+                    if (attendanceRecords.length > 0 && attendanceRecords[0].user) {
+                        attendanceRecords.forEach(record => displayUserDetails(record));
+                    } else {
+                        showCustomAlert("No attendance records found for this user.", function () {
+                        });
+                    }
+                },
+                error: function () {
+                    showCustomAlert("Error fetching user details.", function () {
+                    });
+                }
+            });
+
+            function convertTo12HourFormat(time24) {
+                const [hours, minutes, seconds] = time24.split(":");
+                let hours12 = parseInt(hours, 10);
+                const ampm = hours12 >= 12 ? "PM" : "AM";
+                hours12 = hours12 % 12 || 12; // Convert 0 to 12
+                const formattedTime = `${hours12}:${minutes}:${seconds.split('.')[0]} ${ampm}`;
+                return formattedTime;
+            }
+
+            function displayUserDetails(attendanceRecord) {
+                const userDetailsDiv = $("<div>").addClass("user-details");
+                userDetailsDiv.append(`<h2>Username: <span>${attendanceRecord.user.username}</span></h2>`);
+                userDetailsDiv.append(`<h3>Date: <span>${attendanceRecord.date}</span></h3>`);
+
+                if (attendanceRecord.signInTimes.length === 0 && attendanceRecord.signOutTimes.length === 0) {
+                    userDetailsDiv.append(`<p>Sign In: <span>Absent</span></p>`);
+                    userDetailsDiv.append(`<p>Sign Out: <span>Absent</span></p>`);
+                } else {
+                    for (let i = 0; i < attendanceRecord.signInTimes.length; i++) {
+                        const signInTime = convertTo12HourFormat(attendanceRecord.signInTimes[i]);
+                        const signOutTime = i < attendanceRecord.signOutTimes.length
+                            ? convertTo12HourFormat(attendanceRecord.signOutTimes[i])
+                            : "Absent";
+
+                        userDetailsDiv.append(`<p>Sign In ${i + 1}: <span>${signInTime}</span></p>`);
+                        userDetailsDiv.append(`<p>Sign Out ${i + 1}: <span>${signOutTime}</span></p>`);
+                    }
+                }
+
+                $("body").append(userDetailsDiv);
+            }
+
+
+        });
+
+        function logOut() {
+            // Clear the email from localStorage and redirect
+            localStorage.removeItem("email");
+            window.location.href = "index.html";
+        }
+
+
+
+        function showCustomAlert(message, callback) {
+            $("#customAlertMessage").text(message);
+            $("#customAlert").css("display", "block");
+
+            $("#customAlertOKButton").off("click").on("click", function () {
+                $("#customAlert").css("display", "none");
+                if (typeof callback === "function") {
+                    callback();
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="navbar">
+        <span class="app-name"><a href="index.html">Attendance App</a></span>
+
+        <button class="btn-field" onclick="logOut()">Log Out</button>
+        <!-- <button onclick="history.back()">Back</button> -->
+        <!-- <a href="signin.html">Sign In</a>
+        <a href="signout.html">Sign Out</a>-->
+        <a href="admin.html">Admin</a>
+    </div>
+
+    <h1>User Details</h1>
+    <!-- <button onclick="logOut()">Log Out</button><br> -->
+
+</body>
+
+</html>
